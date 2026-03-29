@@ -9,11 +9,14 @@ import math
 # =====================================================================
 WIDTH = 1440
 HEIGHT = 900
-TITLE = "GÖKTEN ÖTE"
+TITLE = "GÖKYÜZÜNDEN ÖTE"
 
-music.play("abc")
-music.set_volume(0.1)
-
+# Müzik hata vermemesi için try-except içine alınabilir veya dosya adından emin olunmalı
+try:
+    music.play("abc")
+    music.set_volume(0.1)
+except:
+    pass
 
 mode = "intro"
 MAIN_BLUE = (0, 174, 239)
@@ -45,7 +48,6 @@ bg6 = Actor("bg6")
 bg6._surf = pygame.transform.scale(bg6._surf, (WIDTH, HEIGHT))
 bg6.topleft = (0, 0)
 
-# --- YENİ EKLENEN BG7 ---
 bg7 = Actor("bg7") 
 try:
     bg7._surf = pygame.transform.scale(bg7._surf, (WIDTH, HEIGHT))
@@ -67,7 +69,7 @@ resize_player()
 # =====================================================================
 # --- DEĞİŞKENLER ---
 # =====================================================================
-test_gechildi = False # Yeni kıyafetler için kontrol değişkeni
+test_gechildi = False 
 
 uzay_bilgileri = [
     "Uzaya gonderilen ilk canlilar maymun ya da kopek degil, 1947 yilinda ABD tarafindan gonderilen meyve sinekleridir.",
@@ -88,13 +90,11 @@ fade_hedef = ""
 shake_amount = 0
 shake_x, shake_y = 0, 0
 
-# Görev Durumları
 atik_tamamlandi = False
 o2_tamamlandi = False
 jen_tamamlandi = False
 rota_tamamlandi = False
 
-# Mini Oyun Verileri
 dusman_atiklar = []
 mini_oyun_skor = 0
 mini_oyun_can = 3
@@ -121,7 +121,6 @@ def yeni_atik_olustur():
     atik.rot_speed = random.randint(-5, 5)
     dusman_atiklar.append(atik)
 
-# Intro
 intro_baslangic = time.time()
 kozmoz_harfler = "KOZMOS"
 harf_cisimleri = []
@@ -171,9 +170,9 @@ def update():
             intro_parlama_alfa = max(0, intro_parlama_alfa - 10)
             if intro_parlama_alfa == 0 and (time.time() - intro_baslangic) > 3.5: mode = "menu"
 
-    elif mode in ["oyun", "uzay_gemisi"]:
+    # --- HAREKET MANTIĞI: OYUN, GEMİ VE ARTIK FİNAL SAHNEDE DE GEÇERLİ ---
+    elif mode in ["oyun", "uzay_gemisi", "final_sahne"]:
         eski_resim = player.image
-        # KARAKTER DEĞİŞİM MANTIĞI:
         if keyboard.left or keyboard.a: 
             player.x -= 8
             player.image = "astro3" if test_gechildi else "player3"
@@ -189,8 +188,11 @@ def update():
             
         if player.image != eski_resim: resize_player()
         player.x = max(50, min(WIDTH-50, player.x))
+        
+        # Sahneye göre y sınırı
         if mode == "oyun": player.y = max(380, min(810, player.y)) 
-        else: player.y = max(560, min(840, player.y))
+        elif mode == "uzay_gemisi": player.y = max(560, min(840, player.y))
+        elif mode == "final_sahne": player.y = max(600, min(850, player.y)) # Ay yüzeyi sınırı
 
     elif mode == "atik_mini_oyun":
         if random.random() < 0.05: yeni_atik_olustur()
@@ -238,7 +240,7 @@ def draw():
             
     elif mode == "menu":
         background.draw()
-        screen.draw.text("GÖKTEN ÖTE", center=(WIDTH//2, 220), fontsize=120, color=GLOW_BLUE, shadow=(3,3))
+        screen.draw.text("GÖKYÜZÜNDEN ÖTE", center=(WIDTH//2, 220), fontsize=120, color=GLOW_BLUE, shadow=(3,3))
         btn_basla = Rect((WIDTH//2 - 150, 420), (300, 70))
         btn_bilgi = Rect((WIDTH//2 - 150, 510), (300, 70))
         btn_cikis = Rect((WIDTH//2 - 150, 600), (300, 70))
@@ -256,6 +258,7 @@ def draw():
 
     elif mode == "oyun":
         bg3.draw()
+        screen.draw.text("G KUVVETİ MAKİNESİ ", center=(1050,250), color="white", fontsize=30, owidth=1, ocolor="black")
         npc.pos = (1200 + shake_x, 750 + shake_y); npc.draw()
         player.pos = (player.x + shake_x, player.y + shake_y); player.draw()
         if math.sqrt((player.x - pc_egitim_x)**2 + (player.y - pc_egitim_y)**2) < 180:
@@ -331,22 +334,22 @@ def draw():
         kutu = Rect((100, HEIGHT-250), (WIDTH-200, 200)); screen.draw.filled_rect(kutu, (10, 10, 10)); screen.draw.rect(kutu, GREEN)
         screen.draw.text("KAPTAN: Tebrikler testi geçtin! Gemiye transfer oluyorsun. (ENTER)", (130, HEIGHT-180), fontsize=32, color=WHITE)
 
+    # --- BG5 (AY) SAHNESİ: ASTRONOT ARTIK GÖRÜNÜR VE HAREKET EDER ---
     elif mode == "final_sahne":
         bg5.draw()
-        overlay = pygame.Surface((WIDTH, 240)); overlay.set_alpha(180); overlay.fill((0, 0, 0))
-        screen.blit(overlay, (0, HEIGHT // 2 - 120))
-        screen.draw.text("GÖREV BAŞARIYLA TAMAMLANDI!", center=(WIDTH//2, HEIGHT//2 - 30), fontsize=70, color=GREEN, shadow=(2,2))
-        screen.draw.text("Ay'a güvenle iniş yaptın. İnsanlık sana minnettar!", center=(WIDTH//2, HEIGHT//2 + 40), fontsize=35, color=WHITE)
-        screen.draw.text("ENTER'a bas", center=(WIDTH//2, HEIGHT - 100), fontsize=25, color="gray")
+        player.draw() # Oyuncu burada çiziliyor
+        overlay = pygame.Surface((WIDTH, 150)); overlay.set_alpha(150); overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+        screen.draw.text("GÖREV BAŞARIYLA TAMAMLANDI!", center=(WIDTH//2, 50), fontsize=50, color=GREEN, shadow=(2,2))
+        screen.draw.text("Ay'a güvenle iniş yaptın. Ay yüzeyinde gezinebilirsin!", center=(WIDTH//2, 100), fontsize=25, color=WHITE)
+        screen.draw.text("Dünyaya haber vermek için ENTER'a bas", center=(WIDTH//2, HEIGHT - 50), fontsize=20, color="gray")
 
     elif mode == "bg6_son":
         bg6.draw()
         screen.draw.text("Haberleri izlemek için ENTER'a bas", center=(WIDTH//2, HEIGHT - 40), fontsize=20, color="gray")
 
-    # --- YENİ EKLENEN BG7 DRAW MANTIĞI ---
     elif mode == "bg7_ekran":
         bg7.draw()
-
         screen.draw.text("Ana menüye dönmek için ENTER'a bas", center=(WIDTH//2, HEIGHT - 40), fontsize=20, color="gray")
 
     elif mode == "game_over":
@@ -419,14 +422,11 @@ def on_key_down(key):
         fade_baslasin = True
         fade_hedef = "bg6_son"
 
-    # --- BG6_SONDAN SONRA BG7'YE GEÇİŞ ---
     elif mode == "bg6_son" and key == keys.RETURN:
         fade_baslasin = True
         fade_hedef = "bg7_ekran"
 
-    # --- BG7'DEN SONRA MENÜYE DÖNÜŞ ---
     elif mode == "bg7_ekran" and key == keys.RETURN:
-        # Oyunu sıfırla
         guc_bari = 0; atik_tamamlandi = o2_tamamlandi = jen_tamamlandi = rota_tamamlandi = False
         test_gechildi = False
         player.image = "player" 
